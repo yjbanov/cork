@@ -1,0 +1,9 @@
+name: cork
+description: Yet another dependency injection framework for Dart.
+homepage: https://github.com/matanlurey/cork
+author: Matan Lurey <matanl@google.com>
+version: 0.0.1-alpha.3
+depedencies:
+  collection: any
+dev_dependencies:
+  guinness: any
