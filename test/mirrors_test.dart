@@ -2,7 +2,7 @@ library cork.test.mirrors_test;
 
 import 'dart:mirrors';
 
-import 'package:cork/interface.dart';
+import 'package:cork/cork.dart';
 import 'package:cork/src/mirrors.dart';
 
 import 'package:guinness/guinness.dart';

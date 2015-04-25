@@ -1,6 +1,6 @@
 library cork.test.injector_test;
 
-import 'package:cork/interface.dart';
+import 'package:cork/cork.dart';
 import 'package:cork/src/binding.dart';
 
 import 'package:guinness/guinness.dart';

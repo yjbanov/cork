@@ -64,15 +64,15 @@ class Provide {
 /// A type of [Module] that should have a factory created for it in order to
 /// create an injector. Example usage:
 ///
-///   @Component(const [CoffeeMakerModule])
+///   @Entrypoint(const [CoffeeMakerModule])
 ///   class CoffeeApplication() {
 ///     // This will be automatically instantiated by the injector.
 ///     CoffeeApplication(CoffeeMaker coffeeMaker) {}
 ///   }
 ///
-/// Unlike module, [Component] also registers itself as a (root) injectable.
-class Component extends Module implements Inject {
-  const Component(List<Type> included) : super(included);
+/// Unlike module, [Entrypoint] also registers itself as a (root) injectable.
+class Entrypoint extends Module implements Inject {
+  const Entrypoint(List<Type> included) : super(included);
 }
 
 /// An injector interface. Not ideal for tree-shakeable injectors, but generic
@@ -83,7 +83,7 @@ abstract class Injector {
         key: (Binding b) => b.token,
         value: (Binding b) => b.provider));
   }
-  
+
   /// Returns an instance of [type].
   Object get(Type type);
 }
