@@ -6,4 +6,4 @@ version: 0.0.1-alpha.3
 depedencies:
   collection: any
 dev_dependencies:
-  guinness: any
+  test: any

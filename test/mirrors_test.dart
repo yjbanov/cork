@@ -5,7 +5,7 @@ import 'dart:mirrors';
 import 'package:cork/cork.dart';
 import 'package:cork/src/mirrors.dart';
 
-import 'package:guinness/guinness.dart';
+import 'package:test/test.dart';
 
 @Inject()
 class Foo {
@@ -19,69 +19,71 @@ class Foo {
 class FooModule {}
 
 void main() {
-  describe('Mirrors implementation of binding resolution', () {
-    it('has getPositionalArgumentTypes working as intended', () {
+  group('Mirrors implementation of binding resolution', () {
+    test('has getPositionalArgumentTypes working as intended', () {
       final method = reflectClass(Foo).declarations[#staticFooFactory];
-      expect(getPositionalArgumentTypes(method)).toEqual([
+      expect(getPositionalArgumentTypes(method), [
         String,
         DateTime
       ]);
     });
 
-    describe('has getConstructor', () {
-      it('working as intended', () {
+    group('has getConstructor', () {
+      test('working as intended', () {
         final factory = getConstructor(reflectClass(Foo), #create);
-        expect(factory(const [])).toBeAnInstanceOf(Foo);
+        expect(factory(const []), const isInstanceOf<Foo>());
       });
 
-      it('returning the same instance every time', () {
-        expect(getConstructor(reflectClass(Foo), #create))
-            .toBe(getConstructor(reflectClass(Foo), #create));
+      test('returning the same instance every time', () {
+        expect(
+          getConstructor(reflectClass(Foo), #create) ==
+          getConstructor(reflectClass(Foo), #create), isTrue);
       });
     });
 
-    describe('has getStaticFactory', () {
-      it('working as intended', () {
+    group('has getStaticFactory', () {
+      test('working as intended', () {
         final factory = getStaticFactory(reflectClass(Foo), #staticFooFactory);
-        expect(factory(['', new DateTime.now()])).toBeAnInstanceOf(Foo);
+        expect(factory(['', new DateTime.now()]), const isInstanceOf<Foo>());
       });
 
-      it('returning the same instance every time', () {
-        expect(getStaticFactory(reflectClass(Foo), #staticFooFactory))
-            .toBe(getStaticFactory(reflectClass(Foo), #staticFooFactory));
+      test('returning the same instance every time', () {
+        expect(
+          getStaticFactory(reflectClass(Foo), #staticFooFactory) ==
+          getStaticFactory(reflectClass(Foo), #staticFooFactory), isTrue);
       });
     });
 
-    it('has getAnnotations working as intended', () {
-      expect(getAnnotations(reflectClass(Foo), Inject)).toEqual([
+    test('has getAnnotations working as intended', () {
+      expect(getAnnotations(reflectClass(Foo), Inject), [
         const Inject()
       ]);
-      expect(getAnnotations(reflectClass(Foo), Module)).toEqual([]);
+      expect(getAnnotations(reflectClass(Foo), Module), []);
     });
 
-    it('has getInjectable working as intended', () {
-      expect(getInjectable(reflectClass(Foo))).toEqual(const Inject());
-      expect(getInjectable(reflectClass(FooModule))).toBeNull();
+    test('has getInjectable working as intended', () {
+      expect(
+        getInjectable(reflectClass(Foo)), const Inject());
+      expect(getInjectable(reflectClass(FooModule)), isNull);
     });
 
-    it('has getModule working as intended', () {
-      expect(getModule(reflectClass(FooModule)))
-          .toEqual(const Module(const [Foo]));
-      expect(getModule(reflectClass(Foo))).toBeNull();
+    test('has getModule working as intended', () {
+      expect(getModule(reflectClass(FooModule)), const Module(const [Foo]));
+      expect(getModule(reflectClass(Foo)), isNull);
     });
 
-    it('getProviders works as intended', () {
-      expect(getProviders(reflectClass(Foo), Foo).length).toEqual(1);
+    test('getProviders works as intended', () {
+      expect(getProviders(reflectClass(Foo), Foo), hasLength(1));
     });
 
-    it('getProvider works as intended', () {
+    test('getProvider works as intended', () {
       final provider = getProvider(reflectClass(Foo), Foo);
-      expect(provider.factory([null, null])).toBeAnInstanceOf(Foo);
+      expect(provider.factory([null, null]), const isInstanceOf<Foo>());
     });
 
-    it('resolve works as intended', () {
+    test('resolve works as intended', () {
       final bindings = resolve(FooModule);
-      expect(bindings.length).toEqual(1);
+      expect(bindings, hasLength(1));
     });
   });
 }
