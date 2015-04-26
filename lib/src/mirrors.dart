@@ -15,26 +15,38 @@ List<Type> getPositionalArgumentTypes(MethodMirror mirror) {
       .toList(growable: false);
 }
 
+/// Returns a new Symbol combining [a] and [b] seperated by a '.'
+Symbol combineSymbols(Symbol a, Symbol b) {
+  return new Symbol(
+    MirrorSystem.getName(a) + '.' + MirrorSystem.getName(b));
+}
+
 /// Returns a constructor factory [constructorName] for [clazz].
-Factory getConstructor(
-    ClassMirror clazz,
-    Symbol constructorName) {
-  Symbol methodName;
-  if (constructorName != const Symbol('')) {
-    methodName = new Symbol(
-        MirrorSystem.getName(clazz.simpleName) +
-        '.' +
-        MirrorSystem.getName(constructorName));
+Factory getConstructor(ClassMirror clazz, Symbol constructorName) {
+  MethodMirror methodMirror;
+  if (constructorName == const Symbol('')) {
+    methodMirror = clazz.declarations[clazz.simpleName];
+  } else {
+    Symbol methodName;
+
+    // Rewrite slightly, constructor != method name in dart:mirrors.
+    if (constructorName == clazz.simpleName) {
+      methodName = constructorName;
+      constructorName = const Symbol('');
+    } else {
+      methodName = combineSymbols(clazz.simpleName, constructorName);
+    }
+
+    methodMirror = clazz.declarations[methodName];
   }
-  final MethodMirror mirror = clazz.declarations[methodName];
-  assert(mirror != null);
-  var factory = _factoryInstances[mirror];
+  assert(methodMirror != null);
+  var factory = _factoryInstances[methodMirror];
   if (factory == null) {
-    assert(mirror.isConstructor);
+    assert(methodMirror.isConstructor);
     factory = (List positionalArguments) {
       return clazz.newInstance(constructorName, positionalArguments).reflectee;
     };
-    _factoryInstances[mirror] = factory;
+    _factoryInstances[methodMirror] = factory;
   }
   return factory;
 }
@@ -123,7 +135,7 @@ Provider getProvider(ClassMirror clazz, Type forType, [ClassMirror module]) {
     if (mirrors.isNotEmpty) {
       assert(mirrors.length == 1);
       mirror = mirrors.first;
-      factory = getStaticFactory(clazz, mirror.simpleName);
+      factory = getStaticFactory(module, mirror.simpleName);
       return new Provider(factory, getPositionalArgumentTypes(mirror));
     }
   }
@@ -136,7 +148,7 @@ Provider getProvider(ClassMirror clazz, Type forType, [ClassMirror module]) {
     mirror = mirrors.first;
   } else {
     // TODO: Is this the "default" constructor? Is there a better one?
-    mirror = clazz.declarations[mirror.simpleName];
+    mirror = clazz.declarations[clazz.simpleName];
   }
 
   if (mirror.isConstructor) {
