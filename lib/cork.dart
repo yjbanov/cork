@@ -78,25 +78,45 @@ class Entrypoint extends Module implements Inject {
 /// An injector interface. Not ideal for tree-shakeable injectors, but generic
 /// enough to be used anywhere without a transformer.
 abstract class Injector {
-  factory Injector(Iterable<Binding> bindings) {
+  /// A default injector that always throws.
+  static const Null = const _NullInjector();
+
+  /// Create a new injector from resolved [bindings].
+  ///
+  /// If a provider is not found for a type, tries [parent].
+  factory Injector(Iterable<Binding> bindings, [Injector parent = Null]) {
     return new _BindingInjector(new Map<Type, Provider>.fromIterable(bindings,
         key: (Binding b) => b.token,
-        value: (Binding b) => b.provider));
+        value: (Binding b) => b.provider),
+        parent);
   }
 
   /// Returns an instance of [type].
   Object get(Type type);
 }
 
+class _NullInjector implements Injector {
+  const _NullInjector();
+
+  @override
+  Object get(Type type) {
+    throw new StateError('No provider found for "$type".');
+  }
+}
+
 /// A simple implementation of [Injector] using [Binding]s.
 class _BindingInjector implements Injector {
+  final Injector _parent;
   final Map<Type, Provider> _providers;
 
-  const _BindingInjector(this._providers);
+  const _BindingInjector(this._providers, this._parent);
 
   @override
   Object get(Type type) {
     final provider = _providers[type];
+    if (provider == null) {
+      return _parent.get(type);
+    }
     final arguments = provider.dependencies.map(get).toList(growable: false);
     return provider.factory(arguments);
   }

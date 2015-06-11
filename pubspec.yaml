@@ -4,6 +4,13 @@ homepage: https://github.com/matanlurey/cork
 author: Matan Lurey <matanl@google.com>
 version: 0.0.1-alpha.4
 depedencies:
+  analysis: any
   collection: any
+  generator: any
+dependency_overrides:
+  analysis:
+    path: ../analysis
+  generator:
+    path: ../generator
 dev_dependencies:
   test: any
