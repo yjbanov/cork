@@ -9,7 +9,10 @@ import 'package:generator/generator.dart';
 
 class StaticBindingGenerator implements Generator<String> {
   final _sourceCrawler = new SourceCrawler();
-  final _sourceResolver = new SourceResolver();
+  final SourceResolver _sourceResolver;
+
+  StaticBindingGenerator({SourceResolver resolver}) :
+      _sourceResolver = resolver != null ? resolver : new SourceResolver();
 
   Future<String> generate(Uri uri) {
     var sources = _sourceCrawler.crawl(uri: uri);
@@ -19,10 +22,17 @@ class StaticBindingGenerator implements Generator<String> {
 
   @override
   Future<String> process(GeneratorInput input) {
-    var imports = new StringBuffer();
-    imports.writeln('import \'package:cork/src/binding.dart\';');
+    var imports = <DartImport> [];
+    var lines = <GeneratedDartCode> [];
+    var file = new DartFile(imports: imports, lines: lines);
+    imports.add(new DartImport('package:cork/src/binding.dart'));
 
-    var body = new StringBuffer('final staticBindings = [\n');
+    var bindings = <GeneratedDartCode> [];
+    lines.add(new DartVariableDefinition(
+        'staticBindings',
+        isFinal: true,
+        assignTo: new DartArray(bindings)));
+
     var result = input.read();
     var counter = 0;
 
@@ -35,16 +45,27 @@ class StaticBindingGenerator implements Generator<String> {
       var clazz = finder.classAstNode;
 
       var uri = _sourceResolver.resolve(lib.path);
-      imports.writeln('import \'${uri}\' as import_${++counter};');
+      imports.add(new DartImport(uri.toString(), as: 'import_${++counter}'));
 
       var token = clazz.element.displayName;
-      body.writeln('  new Binding(import_$counter.$token, new Provider((_) => new import_$counter.$token(), [])),');
+      bindings.add(
+          new DartInvokeConstructor(
+              'Binding',
+              positionalArguments: [
+                new DartIdentifier('import_$counter.$token'),
+                new DartInvokeConstructor(
+                  'Provider',
+                  positionalArguments: [
+                    new DartIdentifier(
+                      '(_) => new import_$counter.$token()'
+                    ),
+                    new DartArray.constant()
+                  ]
+                )
+              ]));
     });
 
-
-    body.writeln('];');
-
-    return new Future.value('${imports}\n${body}');
+    return new Future.value(file.toSource());
   }
 }
 

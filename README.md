@@ -43,8 +43,7 @@ void main() {
 }
 ```
 
-## Static mode (using hand-written bindings):
-Experimental; you hand write or create a tool to generate a list of `Binding` objects.
+## Simple codegen mode (using hand-written bindings):
 
 ```dart
 import 'package:cork/cork.dart';
@@ -65,7 +64,18 @@ void main() {
 }
 ```
 
-## Codegen mode:
+## Simple codegen mode (using the binding generator):
+
+**Experimental**: Still in development.
+
+```dart
+final foo = Uri.parse('package:cork/testing/library/foo.dart');
+
+// The dart file generated.
+final result = await generator.generate(foo);
+```
+
+## Static mode:
 Not yet implemented; a transformer generates a `$FooModuleInjector` class that would look like this:
 
 ```dart
