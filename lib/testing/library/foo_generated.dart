@@ -1,3 +1,5 @@
+library cork_static_bindings;
+
 import 'package:cork/src/binding.dart';
 import 'package:cork/testing/library/foo.dart' as import_1;
 

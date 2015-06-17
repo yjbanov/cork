@@ -69,31 +69,39 @@ void main() {
 **Experimental**: Still in development.
 
 ```dart
-final foo = Uri.parse('package:cork/testing/library/foo.dart');
+var foo = Uri.parse('package:cork/testing/library/foo.dart');
 
 // The dart file generated.
-final result = await generator.generate(foo);
+var generator = new StaticBindingGenerator();
+var result = await generator.generate(foo);
 ```
 
-## Static mode:
-Not yet implemented; a transformer generates a `$FooModuleInjector` class that would look like this:
+## Static class mode:
+
+**Experimental**: Still in development.
+
+Generates a class called `$GeneratedClass`:
 
 ```dart
-import 'package:cork/cork.dart';
+var foo = Uri.parse('package:cork/testing/library/foo.dart');
 
-import 'foo.dart';
+// The dart file generated.
+var generator = new StaticClassGenerator();
+var result = await generator.generate(foo);
+```
 
-class $FooModuleInjector implements Injector {
-  Foo _foo;
-  
-  @override
-  get(Type type) => throw new UnsupportedError('Does not supported dynamic "get".');
-  
-  Foo getFoo() {
-    if (_foo == null) {
-      _foo = FooModule.getFoo();
+The output looks something like this:
+
+```dart
+import 'package:cork/testing/library/foo.dart' as import_1;
+
+class $GeneratedInjector {
+  import_1.Foo _1;
+  import_1.Foo get1() {
+    if (_1 == null) {
+      _1 = new import_1.Foo();
     }
-    return _foo;
+    return _1;
   }
 }
 ```
