@@ -4,27 +4,18 @@ import 'dart:mirrors';
 
 import 'package:cork/cork.dart';
 import 'package:cork/src/mirrors.dart';
-
+import 'package:cork/testing/library/foo.dart';
+import 'package:cork/testing/library/foo_imported.dart';
 import 'package:test/test.dart';
 
-@Inject()
-class Foo {
-  Foo.create() {}
-
-  @Provide(Foo)
-  static Foo staticFooFactory(String a1, DateTime a2) => new Foo.create();
-}
-
-@Module(const [Foo])
-class FooModule {}
-
+// **NOTE**: Keep this in sync with analyzer_test.dart.
 void main() {
   group('Mirrors implementation of binding resolution', () {
     test('has getPositionalArgumentTypes working as intended', () {
       final method = reflectClass(Foo).declarations[#staticFooFactory];
       expect(getPositionalArgumentTypes(method), [
         String,
-        DateTime
+        Bar
       ]);
     });
 
@@ -44,7 +35,7 @@ void main() {
     group('has getStaticFactory', () {
       test('working as intended', () {
         final factory = getStaticFactory(reflectClass(Foo), #staticFooFactory);
-        expect(factory(['', new DateTime.now()]), const isInstanceOf<Foo>());
+        expect(factory(['', new Bar()]), const isInstanceOf<Foo>());
       });
 
       test('returning the same instance every time', () {

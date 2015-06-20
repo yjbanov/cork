@@ -4,6 +4,7 @@
 library cork.interface;
 
 import 'package:cork/src/binding.dart';
+export 'package:cork/src/binding.dart';
 
 /// Annotation for denoting a class that can be injected within a [Component].
 /// An injectable type can also override so that child dependencies inject
@@ -56,9 +57,11 @@ class Provide {
   final List<Type> inject;
 
   /// The dart [Type] that is provided by the annotated method.
+  ///
+  /// If not specified, it is considered to be the parent class.
   final Type type;
 
-  const Provide(this.type, [this.inject = const []]);
+  const Provide([this.type, this.inject = const []]);
 }
 
 /// A type of [Module] that should have a factory created for it in order to

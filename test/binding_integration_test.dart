@@ -1,8 +1,6 @@
-library cork.test.injector_test;
+library cork.test.binding_integration_test;
 
 import 'package:cork/cork.dart';
-import 'package:cork/src/binding.dart';
-
 import 'package:test/test.dart';
 
 class Foo {}

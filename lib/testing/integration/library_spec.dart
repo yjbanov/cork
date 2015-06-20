@@ -1,7 +1,6 @@
-library cork.test.integration_test;
+library cork.testing.integration.library_spec;
 
-import 'package:cork/dynamic.dart';
-import 'package:test/test.dart';
+import 'package:cork/cork.dart';
 
 // Base class that is used.
 @Inject()
@@ -39,22 +38,3 @@ class SingleModuleEntrypoint {}
 
 @Entrypoint(const [FooModule, FooExtensionModule])
 class DoubleModuleEntrypoint {}
-
-void main() {
-  group('Integration of modules', () {
-    Injector injector;
-    Bar bar;
-
-    test('based on a single module', () {
-      injector = createInjector(SingleModuleEntrypoint);
-      bar = injector.get(Bar);
-      expect(bar.foo.runtimeType, Foo);
-    });
-
-    test('based on an overriding module', () {
-      injector = createInjector(DoubleModuleEntrypoint);
-      bar = injector.get(Bar);
-      expect(bar.foo.runtimeType, FooImpl);
-    });
-  });
-}
