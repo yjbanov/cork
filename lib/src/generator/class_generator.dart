@@ -50,9 +50,9 @@ class InjectorClassGenerator implements Generator<SourceFile> {
       new ImportDirective(corkBindingUri)
     ];
 
-    final classes = <ClassDefinition> [];
-    final fields = <FieldDefinition> [];
-    final methods = <MethodDefinition> [];
+    final classes = <ClassRef> [];
+    final fields = <FieldRef> [];
+    final methods = <MethodRef> [];
 
     var counter = 0;
 
@@ -78,16 +78,16 @@ class InjectorClassGenerator implements Generator<SourceFile> {
       });
 
       // Create a field to hold the instance of this type.
-      var fieldDef = new FieldDefinition('_$counter', dartType: classType);
+      var fieldDef = new FieldRef('_$counter', typeRef: classType);
       fields.add(fieldDef);
 
       // Create a method to return an existing or create a new type.
       var argCounter = 1;
-      methods.add(new MethodDefinition(
+      methods.add(new MethodRef(
           'get$counter',
-          returnType: classType,
+          returnTypeRef: classType,
           positionalArguments: argTypes.map((type) {
-            return new MethodArgument('a${argCounter++}', dartType: type);
+            return new ParameterRef('a${argCounter++}', typeRef: type);
           }).toList(growable: false),
           methodBody: new Source.fromTemplate(r'''
             if ({{field}} == null) {
@@ -101,7 +101,7 @@ class InjectorClassGenerator implements Generator<SourceFile> {
           })));
     });
 
-    classes.add(new ClassDefinition(
+    classes.add(new ClassRef(
         r'$GeneratedInjector',
         fields: fields,
         methods: methods));

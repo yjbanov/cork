@@ -71,11 +71,11 @@ class StaticBindingGenerator implements Generator<SourceFile> {
       var args = new List.generate(argTypes.length, (i) {
         return new Source.fromTemplate('args[{{i}}]', {'i': i});
       });
-      var binding = new InvokeMethod.constructor(
+      var binding = new CallRef.constructor(
           bindingTypeRef,
           positionalArguments: [
             classType,
-            new InvokeMethod.constructor(
+            new CallRef.constructor(
                 providerTypeRef,
                 positionalArguments: [
                   new Source.fromTemplate('(args) => {{factory}}', {
@@ -93,7 +93,7 @@ class StaticBindingGenerator implements Generator<SourceFile> {
         'cork_static_bindings',
         imports: imports..addAll(utils.imports),
         topLevelElements: [
-            new FieldDefinition(
+            new FieldRef(
                 'staticBindings',
                 isFinal: true,
                 assignment: array)

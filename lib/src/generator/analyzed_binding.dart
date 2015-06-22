@@ -8,14 +8,14 @@ import 'package:dart_builder/dart_builder.dart';
 /// A factory reference.
 abstract class FactoryRef {
   /// The class that will be constructed.
-  final DartType typeRef;
+  final TypeRef typeRef;
 
   FactoryRef(this.typeRef);
 
   /// Creates a function invoker, that when called, will create a new [typeRef].
   ///
   /// Optionally, define [positionalArguments].
-  InvokeMethod invoke([List<Source> positionalArguments = const []]);
+  CallRef invoke([List<Source> positionalArguments = const []]);
 }
 
 /// A resolved factory function.
@@ -24,7 +24,7 @@ class ProviderRef {
   final FactoryRef factoryRef;
 
   /// Dependencies required for [factory] to be executed (arguments).
-  final List<DartType> dependencies;
+  final List<TypeRef> dependencies;
 
   ProviderRef(this.factoryRef, [this.dependencies = const []]);
 }
@@ -36,7 +36,7 @@ class BindingRef {
   final ProviderRef providerRef;
 
   /// The type to be created.
-  final DartType tokenRef;
+  final TypeRef tokenRef;
 
   BindingRef(this.tokenRef, this.providerRef);
 }

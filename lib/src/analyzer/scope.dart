@@ -13,7 +13,7 @@ class ScopedAnalyzerUtils {
   final Anthology _anthology;
   final Library _sourceLibrary;
 
-  final _cachedDartTypes = <String, DartType> {};
+  final _cachedDartTypes = <String, TypeRef> {};
   final _importCache = <String, int> {};
   final _importDirectives = new Set<ImportDirective>();
 
@@ -54,7 +54,7 @@ class ScopedAnalyzerUtils {
   }
 
   /// Returns a list of positional argument types for [methodOrConstructor].
-  List<DartType> getPositionalArgumentTypes(ClassMember methodOrConstructor) {
+  List<TypeRef> getPositionalArgumentTypes(ClassMember methodOrConstructor) {
     if (methodOrConstructor == null) {
       throw new ArgumentError.notNull('methorOrConstructor');
     }
@@ -73,11 +73,11 @@ class ScopedAnalyzerUtils {
   Iterable<ImportDirective> get imports => _importDirectives;
 
   /// Converts [staticType] into a generation-friendly [DartType].
-  DartType typeRef(analyzer.DartType staticType) {
+  TypeRef typeRef(analyzer.DartType staticType) {
     // TODO: Rename DartType TypeRef.
     // TODO: Better deal with dart: core types.
     if (staticType.element.library.isDartCore) {
-      return new DartType(staticType.displayName);
+      return new TypeRef(staticType.displayName);
     }
     final typeSourceUri = staticType.element.library.source.toString();
     final cacheKey = '$typeSourceUri:${staticType.displayName}';
@@ -91,7 +91,7 @@ class ScopedAnalyzerUtils {
       var importLib = _anthology.getLibraryOfType(staticType);
       var importDirective = new ImportDirective(importLib.uri, as: namespace);
       _importDirectives.add(importDirective);
-      dartType = new DartType(
+      dartType = new TypeRef(
           staticType.displayName.split('<').first, // TODO: Remove hack
           namespace: namespace);
     }
@@ -102,12 +102,12 @@ class ScopedAnalyzerUtils {
 class _ConstructorFactoryRef extends FactoryRef {
   final String _constructorName;
 
-  _ConstructorFactoryRef(DartType typeRef, [this._constructorName])
+  _ConstructorFactoryRef(TypeRef typeRef, [this._constructorName = ''])
       : super(typeRef);
 
   @override
-  InvokeMethod invoke([List<Source> positionalArguments = const []]) {
-    return new InvokeMethod.constructor(
+  CallRef invoke([List<Source> positionalArguments = const []]) {
+    return new CallRef.constructor(
         typeRef,
         constructorName: _constructorName,
         positionalArguments: positionalArguments);
@@ -117,11 +117,11 @@ class _ConstructorFactoryRef extends FactoryRef {
 class _StaticMethodFactoryRef extends FactoryRef {
   final String _methodName;
 
-  _StaticMethodFactoryRef(DartType typeRef, this._methodName) : super(typeRef);
+  _StaticMethodFactoryRef(TypeRef typeRef, this._methodName) : super(typeRef);
 
   @override
-  InvokeMethod invoke([List<Source> positionalArguments = const []]) {
-    return new InvokeMethod.static(
+  CallRef invoke([List<Source> positionalArguments = const []]) {
+    return new CallRef.static(
         typeRef,
         _methodName,
         positionalArguments: positionalArguments);
