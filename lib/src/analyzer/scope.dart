@@ -11,7 +11,6 @@ import 'package:dart_builder/dart_builder.dart';
 /// analysis and dart_builder packages.
 class ScopedAnalyzerUtils {
   final Anthology _anthology;
-  final Library _sourceLibrary;
 
   final _cachedDartTypes = <String, TypeRef> {};
   final _importCache = <String, int> {};
@@ -20,7 +19,7 @@ class ScopedAnalyzerUtils {
   int _importCounter = 1;
 
   /// Creates a utility class using an existing analysis [Anthology].
-  ScopedAnalyzerUtils.fromAnthology(this._anthology, this._sourceLibrary);
+  ScopedAnalyzerUtils.fromAnthology(this._anthology);
 
   /// Returns a factory reference for creating a new [clazz].[constructorName].
   FactoryRef getConstructor(ClassDeclaration clazz, {String constructorName}) {

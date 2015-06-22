@@ -58,8 +58,6 @@ class InjectorClassGenerator implements Generator<SourceFile> {
 
     input.read().forEach((ClassDeclaration astNode, sourceLib) {
       counter++;
-      var importUri = _sourceResolver.resolve(sourceLib.path);
-
       // Create a new unique, namespaced type.
       // TODO: Avoid writing duplicate types.
       var classType = utils.typeRef(astNode.element.type);
