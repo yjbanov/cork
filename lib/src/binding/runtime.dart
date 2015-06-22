@@ -1,4 +1,4 @@
-library cork.src.binding;
+library cork.src.binding.runtime;
 
 import 'package:collection/equality.dart' show IterableEquality;
 
@@ -24,9 +24,8 @@ class Provider<T> {
   }
 }
 
-/// A resolved DI binding. When [token] should be instantiated, then [factory]
-/// should be used to create it; [inject] is a list of parameter types that
-/// should be injected to resolve dependencies for [factory].
+/// A resolved DI binding. When [token] should be instantiated, then [provider]
+/// should be used to create it.
 class Binding<T> {
   /// Provider tuple for [T].
   final Provider<T> provider;

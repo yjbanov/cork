@@ -72,20 +72,20 @@ void main() {
 Instead of hand-writing your `Binding`s, have Cork generate them by pointing at an entrypoint file and saving the output as your static bindings. For example:
 
 ```dart
-var foo = Uri.parse('package:cork/testing/library/foo.dart');
+var foo = Uri.parse('package:cork/testing/integration/spec.dart');
 
 // The dart file generated.
-var generator = new StaticBindingGenerator();
-var result = await generator.generate(foo);
+var generator = new BindingGenerator(anthology);
+var result = await generator.generate(uri, 'SingleModuleEntrypoint');
 // result.toSource() is a formatted file that looks like the code blob below.
 ```
 
 ```dart
-final staticBindings = <import_1.Binding>[
-  new import_1.Binding(import_2.Foo,
-      new import_1.Provider((args) => new import_2.Foo(), const [])),
-  new import_1.Binding(import_2.Bar, new import_1.Provider(
-      (args) => new import_2.Bar(args[0]), const [import_2.Foo]))
+final bindingsForSingleModuleEntrypoint = <import_2.Binding>[
+  new import_2.Binding(import_1.Foo,
+      new import_2.Provider((args) => new import_1.Foo(), const [])),
+  new import_2.Binding(import_1.Bar, new import_2.Provider(
+      (args) => new import_1.Bar(args[0]), const [import_1.Foo]))
 ];
 ```
 
@@ -110,31 +110,31 @@ It is easier to use the dynamic `Injector`, either with mirrors or with the bind
 
 For scenarios where you are able to take full advantage of a completely typed and static injector, Cork will help generate a typed injector *specifically* for your application. For example:
 
-Generates a class called `$GeneratedClass`:
+Generates a class called `SingleModuleEntrypointInjector`:
 
 ```dart
-var foo = Uri.parse('package:cork/testing/library/foo.dart');
+var foo = Uri.parse('package:cork/testing/integration/spec.dart');
 
 // The dart file generated.
-var generator = new StaticClassGenerator();
-var result = await generator.generate(foo);
+var generator = new ClassGenerator(anthology);
+var result = await generator.generate(uri, 'SingleModuleEntrypoint');
 // result.toSource() is a formatted file that looks like the code blob below.
 ```
 
 ```dart
-class $GeneratedInjector {
-  import_2.Foo _1;
-  import_2.Bar _2;
-  import_2.Foo get1() {
+class SingleModuleEntrypointInjector {
+  import_1.Foo _1;
+  import_1.Bar _2;
+  import_1.Foo get1() {
     if (_1 == null) {
-      _1 = new import_2.Foo();
+      _1 = new import_1.Foo();
     }
     return _1;
   }
 
-  import_2.Bar get2(import_2.Foo a1) {
+  import_1.Bar get2() {
     if (_2 == null) {
-      _2 = new import_2.Bar(a1);
+      _2 = new import_1.Bar(get1());
     }
     return _2;
   }
@@ -144,7 +144,7 @@ class $GeneratedInjector {
 It's possible to use this injector directly like any other class in your code:
 
 ```dart
-var injector = new $GeneratedInjector();
+var injector = new SingleModuleEntrypointInjector();
 var foo = injector.get1();
 assert(foo.runtimeType == Foo);
 ```

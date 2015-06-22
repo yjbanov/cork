@@ -3,8 +3,7 @@
 /// implementation code within.
 library cork.interface;
 
-import 'package:cork/src/binding.dart';
-export 'package:cork/src/binding.dart';
+import 'package:cork/src/binding/runtime.dart';
 
 /// Annotation for denoting a class that can be injected within a [Component].
 /// An injectable type can also override so that child dependencies inject

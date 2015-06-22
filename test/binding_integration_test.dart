@@ -1,6 +1,7 @@
 library cork.test.binding_integration_test;
 
 import 'package:cork/cork.dart';
+import 'package:cork/src/binding/runtime.dart';
 import 'package:test/test.dart';
 
 class Foo {}

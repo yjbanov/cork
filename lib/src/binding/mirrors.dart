@@ -3,7 +3,7 @@ library cork.src.mirrors;
 import 'dart:mirrors';
 
 import 'package:cork/cork.dart';
-import 'package:cork/src/binding.dart';
+import 'package:cork/src/binding/runtime.dart';
 
 /// Saves a [Factory] instance.
 final _factoryInstances = new Expando<Factory>('factoryInstances');
@@ -11,14 +11,14 @@ final _factoryInstances = new Expando<Factory>('factoryInstances');
 /// Returns a list of positional argument types for [mirror].
 List<Type> getPositionalArgumentTypes(MethodMirror mirror) {
   return mirror.parameters
-      .map((p) => p.type.reflectedType)
-      .toList(growable: false);
+  .map((p) => p.type.reflectedType)
+  .toList(growable: false);
 }
 
 /// Returns a new Symbol combining [a] and [b] seperated by a '.'
 Symbol combineSymbols(Symbol a, Symbol b) {
   return new Symbol(
-    MirrorSystem.getName(a) + '.' + MirrorSystem.getName(b));
+      MirrorSystem.getName(a) + '.' + MirrorSystem.getName(b));
 }
 
 /// Returns a constructor factory [constructorName] for [clazz].
