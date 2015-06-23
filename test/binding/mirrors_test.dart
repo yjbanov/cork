@@ -3,7 +3,7 @@ library cork.test.mirrors_test;
 import 'dart:mirrors';
 
 import 'package:cork/cork.dart';
-import 'package:cork/src/mirrors.dart';
+import 'package:cork/src/binding/mirrors.dart';
 import 'package:cork/testing/library/foo.dart';
 import 'package:cork/testing/library/foo_imported.dart';
 import 'package:test/test.dart';
@@ -63,11 +63,11 @@ void main() {
       expect(getModule(reflectClass(Foo)), isNull);
     });
 
-    test('getProviders works as intended', () {
+    test('getProviders working as intended', () {
       expect(getProviders(reflectClass(Foo), Foo), hasLength(1));
     });
 
-    test('getProvider works as intended', () {
+    test('getProvider working as intended', () {
       final provider = getProvider(reflectClass(Foo), Foo);
       expect(provider.factory([null, null]), const isInstanceOf<Foo>());
     });

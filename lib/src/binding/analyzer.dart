@@ -2,6 +2,7 @@ library cork.src.binding.analyzer;
 
 import 'dart:mirrors';
 
+import 'package:analysis/analysis.dart';
 import 'package:analyzer/analyzer.dart' hide ImportDirective;
 import 'package:analyzer/src/generated/element.dart' as analyzer;
 import 'package:cork/cork.dart';
@@ -12,8 +13,28 @@ import 'package:dart_builder/dart_builder.dart';
 /// [StaticBindingAnalyzer]. Generic in order to be more easily pluggable and
 /// testable.
 abstract class StaticAnalysisProvider {
+  /// Resolves [staticType] to the [Library] containing it.
+  Library findStaticType(analyzer.DartType staticType);
+
   /// Resolves [staticType] to the [Uri] containing it.
   Uri resolveStaticType(analyzer.DartType staticType);
+}
+
+/// Implementation of [StaticAnalysisProvider] that uses an [Anthology].
+class AnthologyAnalysisProvider implements StaticAnalysisProvider {
+  final Anthology _anthology;
+
+  AnthologyAnalysisProvider(this._anthology);
+
+  @override
+  Library findStaticType(analyzer.DartType dartType) {
+    return _anthology.getLibraryOfType(dartType);
+  }
+
+  @override
+  Uri resolveStaticType(analyzer.DartType dartType) {
+    return findStaticType(dartType).uri;
+  }
 }
 
 /// A reference to [Module].
@@ -89,6 +110,7 @@ class StaticBindingAnalyzer {
     return true;
   }
 
+  /// Returns an analyzed [Module] annotation on [clazz], or null if none.
   ModuleRef getModuleRef(ClassDeclaration clazz) {
     // TODO: Use deep type inspection instead of this hack.
     final modules = getAnnotations(clazz, Module);
@@ -97,7 +119,19 @@ class StaticBindingAnalyzer {
       return null;
     }
     assert(modules.length + entryPoints.length == 1);
-    throw new UnimplementedError();
+    Annotation a = modules.isNotEmpty ? modules.first : entryPoints.first;
+
+    Expression list = a.arguments.arguments.first;
+    Iterable<analyzer.ClassElementImpl> classElements = list.childEntities
+        .where((e) => e is SimpleIdentifier)
+        .map((SimpleIdentifier e) =>
+            (e.staticElement as analyzer.ClassElementImpl));
+
+    final included = classElements.map((clazzEl) {
+      return clazzEl.node;
+    }).toList(growable: false);
+
+    return new ModuleRef(included);
   }
 
   /// Returns all [ClassMember]s that have the [Provide] annotation [forType].
@@ -108,7 +142,9 @@ class StaticBindingAnalyzer {
     for (final member in clazz.members) {
       final annotations = getAnnotations(member, Provide);
       for (final provider in annotations) {
-        if (provider.arguments.arguments.first.bestType == forType) {
+        SimpleIdentifier item = provider.arguments.arguments.first;
+        final dartType = (item.staticElement as analyzer.ClassElementImpl).type;
+        if (dartType == forType) {
           providers.add(member);
         }
       }
@@ -133,7 +169,7 @@ class StaticBindingAnalyzer {
       if (providers.isNotEmpty) {
         assert(providers.isNotEmpty);
         member = providers.first;
-        factoryRef = getStaticFactory(clazz, member.element.name);
+        factoryRef = getStaticFactory(module, member.element.name);
         return new ProviderRef(factoryRef, getPositionalArgumentTypes(member));
       }
     }
@@ -145,24 +181,44 @@ class StaticBindingAnalyzer {
       assert(providers.length == 1);
       member = providers.first;
     } else {
-      member = clazz.getConstructor('');
+      member = clazz.getConstructor(null);
     }
 
-    if (member is ConstructorDeclaration) {
-      factoryRef = getConstructor(
-          clazz,
-          member != null ? member.element.name : '');
+    List<TypeRef> dependencies = const [];
+
+    if (member == null) {
+      factoryRef = getConstructor(clazz, '');
+    } else if (member is ConstructorDeclaration) {
+      factoryRef = getConstructor(clazz, member.element.name);
+      dependencies = getPositionalArgumentTypes(member);
     } else {
       factoryRef = getStaticFactory(clazz, member.element.name);
+      dependencies = getPositionalArgumentTypes(member);
     }
-    return new ProviderRef(factoryRef, getPositionalArgumentTypes(member));
+
+    return new ProviderRef(factoryRef, dependencies);
   }
 
   /// Returns resolved [BindingRef]s from [clazz], where [clazz] is annotated
   /// with a [Module] annotation type.
   Iterable<BindingRef> resolve(ClassDeclaration clazz) {
-    final modules = getAnnotations(clazz, Module);
-
+    final moduleRef = getModuleRef(clazz);
+    if (moduleRef == null) {
+      throw new ArgumentError('No @Module defined on "$clazz".');
+    }
+    final bindingRefs = <BindingRef> [];
+    for (final include in moduleRef.included) {
+      final subModule = getModuleRef(include);
+      if (subModule != null) {
+        bindingRefs.addAll(resolve(include));
+      } else {
+        assert(hasInjectable(include));
+        final provider = getProvider(include, include.element.type, clazz);
+        final tokenTypeRef = scopeType(include.element.type);
+        bindingRefs.add(new BindingRef(tokenTypeRef, provider));
+      }
+    }
+    return bindingRefs;
   }
 
   /// A collection of all import directives that were generated from scoping.

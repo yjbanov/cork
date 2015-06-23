@@ -3,7 +3,7 @@ library cork.src.mirrors;
 import 'dart:mirrors';
 
 import 'package:cork/cork.dart';
-import 'package:cork/src/binding.dart';
+import 'package:cork/src/binding/runtime.dart';
 
 /// Saves a [Factory] instance.
 final _factoryInstances = new Expando<Factory>('factoryInstances');

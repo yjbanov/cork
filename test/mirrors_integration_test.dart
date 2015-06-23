@@ -1,7 +1,7 @@
-library cork.test.integration_test;
+library cork.test.mirrors_integration_test;
 
 import 'package:cork/mirrors.dart';
-import 'package:cork/testing/integration/library_spec.dart';
+import 'package:cork/testing/integration/spec.dart';
 import 'package:test/test.dart';
 
 void main() {

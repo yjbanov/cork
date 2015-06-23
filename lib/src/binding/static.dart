@@ -52,6 +52,12 @@ class ProviderRef {
   final List<TypeRef> dependencies;
 
   ProviderRef(this.factoryRef, [this.dependencies = const []]);
+
+  @override
+  String toString() => 'ProviderRef ' + {
+    'factoryRef': factoryRef.invoke([]).toSource(),
+    'dependencies': dependencies.map((d) => d.toSource())
+  }.toString();
 }
 
 /// A resolved DI binding. When [token] should be instantiated, then
@@ -64,4 +70,10 @@ class BindingRef {
   final TypeRef tokenRef;
 
   BindingRef(this.tokenRef, this.providerRef);
+
+  @override
+  String toString() => 'BindingRef ' + {
+    'token': tokenRef.toSource(),
+    'provider': providerRef.toString()
+  }.toString();
 }
