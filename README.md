@@ -2,7 +2,7 @@
 
 [![Build Status](https://drone.io/github.com/matanlurey/cork/status.png)](https://drone.io/github.com/matanlurey/cork/latest)
 
-Yet another dependency injection framework for Dart, built based on [Dagger](https://google.github.io/dagger/).
+A **fast** dependency injection framework and codegen engine for Dart.
 
 Example:
 
@@ -25,10 +25,14 @@ class FooModule {
 }
 ```
 
-Cork is built with static analysis and tree-shaking in mind, but is currently only a __prototype__. There are three planned ways to use Cork in your application:
+Cork is built with static analysis and tree-shaking in mind. As such, unlike [package:di](https://pub.dartlang.org/packages/di), all bindings are declared via Dart [metadata annotations](https://www.dartlang.org/docs/dart-up-and-running/ch02.html#metadata).
 
-## Dynamic mode (using `dart:mirrors`)
-Suitable for use in the Dart VM (e.g. server-side), or within Dartium only.
+It is possible to run Cork with either _runtime_ or _compile-time_ analysis, depending on your target platform, and even mix and match (i.e. use runtime reflection for development, and compile-time for production).
+
+## Running Cork
+
+### Reflective mode (using `dart:mirrors`)
+Suitable for use in the Dart VM (e.g. server-side), or within Dartium for develpopment only.
 
 ```dart
 import 'package:cork/dynamic.dart';
@@ -43,33 +47,49 @@ void main() {
 }
 ```
 
-## Simple codegen mode (using hand-written bindings):
-If you want to use Cork today, without reflection. It's tedious, but works.
+### Static mode
+Disable reflection and use Cork in a production/static mode by analyzing your app and generating bindings.
 
-You define a single `Binding` for every `@Inject`-able, and pass both the token of what will be injected (i.e. `Foo`) and a `Provider`, which is a tuple between a factory-function for creating a `Foo` instance and the dependencies required to be injected to create one.
+**NOTE**: This is still experimental.
+
+There are a few strategies:
+
+#### Dynamic mode
+
+To maintain API compatibility, it is possible to manually create an `Injector` with generated bindings:
 
 ```dart
 import 'package:cork/cork.dart';
 
 import 'foo.dart';
+import 'foo_generated.dart' as generated;
 
 void main() {
-  var bindings = [
-    new Binding(Foo, new Provider((_) => new CustomFooImpl(), const [])),
-    new Binding(Bar, new Provider((args) => new Bar(args[0]), const [Foo]))
-  ];
-  
-  var injector = new Injector(bindings);
+  var injector = new Injector(generated.bindingsForFooModule);
   var foo = injector.get(Foo);
-  assert(foo.runtimeType == CustomFooImpl);
+  assert(foo.runtimeType == CustomFooImpl)
 }
 ```
 
-## Simple codegen mode (using the binding generator):
+##### Background
 
-**Experimental**: Still in development. Does not properly support the `@Module` or `@Entrypoint` annotation, and is not recommended for use in anything but an experiment.
+The reflective mode of Cork uses mirrors to generate `Binding` objects:
 
-Instead of hand-writing your `Binding`s, have Cork generate them by pointing at an entrypoint file and saving the output as your static bindings. For example:
+```dart
+abstract class Binding {
+  /// Provider tuple for [T].
+  final Provider<T> provider;
+
+  /// The type of [T].
+  final Type token;
+}
+```
+
+Simply put, a `Binding` is a tuple between a `Provider` (factory) and a `Type` (token).
+
+##### Generating bindings
+
+The Cork binding generator can analyze an `@Entrypoint`, and generate a full list of bindings:
 
 ```dart
 var foo = Uri.parse('package:cork/testing/integration/spec.dart');
@@ -89,19 +109,10 @@ final bindingsForSingleModuleEntrypoint = <import_2.Binding>[
 ];
 ```
 
-You can then create a new static injector:
+**NOTE**: A transformer will be available in an upcoming version. Right now it requires manual work.
 
-```dart
-import 'your_static_bindings_file.dart';
+#### Static mode:
 
-var injector = new Injector(staticBindings);
-var foo = injector.get(Foo);
-assert(foo.runtimeType == CustomFooImpl);
-```
-
-## Static class mode:
-
-**Experimental**: Still in development. Does not properly support the `@Module` or `@Entrypoint` annotation, and is not recommended for use in anything but an experiment.
 
 It is easier to use the dynamic `Injector`, either with mirrors or with the binding generator, in most applications, because you are able to at runtime determine what to create a new instance of. However, there are performance penalities involved:
 
@@ -149,6 +160,8 @@ var foo = injector.get1();
 assert(foo.runtimeType == Foo);
 ```
 
+## Future plans
+
 Ultimately, Cork will also supply source generation helpers to rewrite parts of your application to take use of the statically defined methods. Something like below is planned - it will run using *mirrors* in development mode.
 
 ```dart
@@ -183,3 +196,5 @@ void main() {
   injector.get1().getBar();
 }
 ```
+
+There are also adapters planned to use Cork in Angular 1.0 and Angular 2.0 applications.
