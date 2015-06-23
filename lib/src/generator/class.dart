@@ -23,15 +23,28 @@ class ClassGenerator {
   }
 
   Future<SourceFile> generate(Iterable<BindingRef> bindingRefs, String entry) {
+    final corkCoreUri = Uri.parse('package:cork/cork.dart');
     final corkBindingUri = Uri.parse('package:cork/src/binding/runtime.dart');
 
     // Start a collection of imports.
     final imports = <ImportDirective> [
+      new ImportDirective(corkCoreUri),
       new ImportDirective(corkBindingUri)
     ];
 
     final fields = <FieldRef> [];
-    final methods = <MethodRef> [];
+    final methods = <MethodRef> [
+      new MethodRef(
+          'get',
+          methodBody: new Source.fromTemplate(
+              "throw new UnsupportedError('{{message}}');", {
+                'message': 'Generated injector does not support dynamic get.'
+              }),
+          positionalArguments: [
+            new ParameterRef('_')
+          ]
+      )
+    ];
 
     var counter = 0;
     final typeToIdMap = <TypeRef, int> {};
@@ -77,7 +90,10 @@ class ClassGenerator {
     final clazz = new ClassRef(
         '${entry}Injector',
         fields: fields,
-        methods: methods);
+        methods: methods,
+        implement: const [
+          const TypeRef('Injector')
+        ]);
 
     final file = new SourceFile.library(
         'cork.generated.$entry',
