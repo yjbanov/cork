@@ -1,5 +1,5 @@
 name: cork
-description: A fast dependency injection framework and codegen engine for Dart.
+description: Fast dependency injection for Dart.
 homepage: https://github.com/matanlurey/cork
 author: Matan Lurey <matanl@google.com>
 version: 0.1.1
