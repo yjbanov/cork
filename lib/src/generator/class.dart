@@ -8,11 +8,29 @@ import 'package:cork/src/binding/analyzer.dart';
 import 'package:cork/src/binding/static.dart';
 import 'package:dart_builder/dart_builder.dart';
 
+typedef UniquenessStrategy UniquenessStrategyFactory();
+
+abstract class UniquenessStrategy {
+  static _defaultFactory() => const _NoopUniquenessStrategy();
+
+  String uniqueify(TypeRef typeRef);
+}
+
+class _NoopUniquenessStrategy implements UniquenessStrategy {
+  const _NoopUniquenessStrategy();
+
+  @override
+  String uniqueify(TypeRef typeRef) => typeRef.name;
+}
+
 class ClassGenerator {
   final StaticBindingAnalyzer _analyzer;
   final Anthology _anthology;
+  final UniquenessStrategyFactory _factory;
 
-  ClassGenerator(Anthology anthology)
+  ClassGenerator(
+      Anthology anthology, [
+      this._factory = UniquenessStrategy._defaultFactory])
       : _anthology = anthology,
         _analyzer = new StaticBindingAnalyzer(
             new AnthologyAnalysisProvider(anthology));
@@ -24,12 +42,10 @@ class ClassGenerator {
 
   Future<SourceFile> generate(Iterable<BindingRef> bindingRefs, String entry) {
     final corkCoreUri = Uri.parse('package:cork/cork.dart');
-    final corkBindingUri = Uri.parse('package:cork/src/binding/runtime.dart');
 
     // Start a collection of imports.
     final imports = <ImportDirective> [
-      new ImportDirective(corkCoreUri),
-      new ImportDirective(corkBindingUri)
+      new ImportDirective(corkCoreUri)
     ];
 
     final fields = <FieldRef> [];
@@ -46,8 +62,7 @@ class ClassGenerator {
       )
     ];
 
-    var counter = 0;
-    final typeToIdMap = <TypeRef, int> {};
+    final uniqueness = _factory();
 
     // Dedupe tokens.
     var dedupe = <TypeRef, BindingRef> {};
@@ -57,24 +72,21 @@ class ClassGenerator {
     bindingRefs = dedupe.values;
 
     for (final ref in bindingRefs) {
-      counter++;
-      typeToIdMap[ref.tokenRef] = counter;
-    }
-
-    for (final ref in bindingRefs) {
       // Create a field to hold the instance of this type.
+      var fieldName = uniqueness.uniqueify(ref.tokenRef);
+      fieldName = fieldName[0].toLowerCase() + fieldName.substring(1);
       var fieldDef = new FieldRef(
-          '_${typeToIdMap[ref.tokenRef]}',
+          '_$fieldName',
           typeRef: ref.tokenRef);
       fields.add(fieldDef);
 
       // Create a method to return an existing or create a new type.
       var args = ref.providerRef.dependencies.map((d) {
-        var id = typeToIdMap[d];
+        var id = uniqueness.uniqueify(d);
         return new Source.fromDart('get$id()');
       }).toList(growable: false);
       methods.add(new MethodRef(
-          'get${typeToIdMap[ref.tokenRef]}',
+          'get${uniqueness.uniqueify(ref.tokenRef)}',
           returnTypeRef: ref.tokenRef,
           methodBody: new Source.fromTemplate(r'''
             if ({{field}} == null) {
@@ -97,7 +109,7 @@ class ClassGenerator {
 
     final file = new SourceFile.library(
         'cork.generated.$entry',
-        imports: imports..addAll(_analyzer.scopedImports),
+        imports: imports..addAll(_analyzer.calculateImports()),
         topLevelElements: [clazz]);
 
     return new Future.value(file);

@@ -39,7 +39,7 @@ void main() {
       test('working as intended', () {
         ClassDeclaration clazz = library.getDeclaration('Foo');
         final factory = analyzer.getConstructor(clazz, 'create');
-        expect(factory.invoke([]).toSource(), 'new import_1.Foo.create()');
+        expect(factory.invoke([]).toSource(), 'new Foo.create()');
       });
     });
 
@@ -55,7 +55,7 @@ void main() {
               new Source.fromDart("''"),
               new CallRef.constructor(analyzer.scopeType(bar.element.type))
             ]).toSource(),
-            'import_1.Foo.staticFooFactory(\'\', new import_2.Bar())');
+            'Foo.staticFooFactory(\'\', new Bar())');
       });
     });
 
@@ -99,7 +99,7 @@ void main() {
             new Source.fromDart('null'),
             new Source.fromDart('null')
           ]).toSource(),
-          'import_1.Foo.staticFooFactory(null, null)');
+          'Foo.staticFooFactory(null, null)');
     });
 
     test('resolve works as intended', () {
@@ -108,13 +108,13 @@ void main() {
       expect(bindingRefs, hasLength(1));
 
       final fooBinding = bindingRefs.first;
-      expect(fooBinding.tokenRef.toSource(), 'import_1.Foo');
+      expect(fooBinding.tokenRef.toSource(), 'Foo');
       expect(
           fooBinding.providerRef.factoryRef.invoke([]).toSource(),
-          'import_1.Foo.staticFooFactory()');
+          'Foo.staticFooFactory()');
       expect(
           fooBinding.providerRef.dependencies,
-          [TypeRef.STRING, new TypeRef('Bar', namespace: 'import_2')]);
+          [TypeRef.STRING, new TypeRef('Bar')]);
     });
   });
 }

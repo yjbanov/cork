@@ -101,11 +101,9 @@ var result = await generator.generate(uri, 'SingleModuleEntrypoint');
 ```
 
 ```dart
-final bindingsForSingleModuleEntrypoint = <import_2.Binding>[
-  new import_2.Binding(import_1.Foo,
-      new import_2.Provider((args) => new import_1.Foo(), const [])),
-  new import_2.Binding(import_1.Bar, new import_2.Provider(
-      (args) => new import_1.Bar(args[0]), const [import_1.Foo]))
+final bindingsForSingleModuleEntrypoint = <Binding>[
+  new Binding(Foo, new Provider((args) => new Foo(), const [])),
+  new Binding(Bar, new Provider((args) => new Bar(args[0]), const [Foo]))
 ];
 ```
 
@@ -133,21 +131,26 @@ var result = await generator.generate(uri, 'SingleModuleEntrypoint');
 ```
 
 ```dart
-class SingleModuleEntrypointInjector {
-  import_1.Foo _1;
-  import_1.Bar _2;
-  import_1.Foo get1() {
-    if (_1 == null) {
-      _1 = new import_1.Foo();
-    }
-    return _1;
+class SingleModuleEntrypointInjector implements Injector {
+  Foo _foo;
+  Bar _bar;
+  get(_) {
+    throw new UnsupportedError(
+        'Generated injector does not support dynamic get.');
   }
 
-  import_1.Bar get2() {
-    if (_2 == null) {
-      _2 = new import_1.Bar(get1());
+  Foo getFoo() {
+    if (_foo == null) {
+      _foo = new Foo();
     }
-    return _2;
+    return _foo;
+  }
+
+  Bar getBar() {
+    if (_bar == null) {
+      _bar = new Bar(getFoo());
+    }
+    return _bar;
   }
 }
 ```

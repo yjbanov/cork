@@ -44,19 +44,76 @@ class ModuleRef {
   ModuleRef(this.included);
 }
 
+/// How to, if at all, scope types and imports to avoid conflicts.
+abstract class NamespaceStrategy {
+  /// Creates an implementation that automatically prefixes all imports.
+  factory NamespaceStrategy() = _ScopedNamespaceStrategy;
+
+  /// Creates an implementation that does nothing.
+  const factory NamespaceStrategy.noop() = _NoopNamespaceStrategy;
+
+  /// Hashes [uniqueValue] to an incremented value.
+  int getUniqueId(String source);
+
+  /// Returns the namespace for [identifier], or null if it should not be.
+  TypeRef namespace(String source, String identifier);
+}
+
+/// A no-op implementation that is suitable for tests.
+class _NoopNamespaceStrategy implements NamespaceStrategy {
+  const _NoopNamespaceStrategy();
+
+  @override
+  int getUniqueId(_) => 0;
+
+  @override
+  TypeRef namespace(_, String identifier) {
+    return new TypeRef(identifier.split('<').first);
+  }
+}
+
+/// A scoped implementation.
+class _ScopedNamespaceStrategy implements NamespaceStrategy {
+  final _cachedDartTypeRefs = <String, TypeRef> {};
+  final _libraryNamespaceId = <String, int> {};
+
+  int _importCounter = 1;
+
+  @override
+  int getUniqueId(String source) {
+    var uniqueId = _libraryNamespaceId[source];
+    if (uniqueId == null) {
+      uniqueId = _libraryNamespaceId[source] = _importCounter++;
+    }
+    return uniqueId;
+  }
+
+  @override
+  TypeRef namespace(String source, String identifier) {
+    identifier = identifier.split('<').first;
+    var cacheKey = '$source:$identifier';
+    var typeRef = _cachedDartTypeRefs[cacheKey];
+    if (typeRef == null) {
+      var id = getUniqueId(source);
+      typeRef = new TypeRef(identifier, namespace: 'import_$id');
+    }
+    return typeRef;
+  }
+}
+
 /// A set of utility methods mimicking those of the "mirrors.dart"
 /// implementation that instead relies on generating Dart source code using the
 /// analysis and dart_builder packages.
 class StaticBindingAnalyzer {
-  final _cachedDartTypeRefs = <String, TypeRef> {};
-  final _importDirectives = new Set<ImportDirective>();
-  final _libraryNamespaceId = <String, int> {};
+  final _importDirectives = <Uri, List<String>> {};
+  final NamespaceStrategy _namespaceStrategy;
   final StaticAnalysisProvider _provider;
 
-  int _importCounter = 1;
+  StaticBindingAnalyzer(
+      this._provider, [
+      this._namespaceStrategy = const NamespaceStrategy.noop()]);
 
-  StaticBindingAnalyzer(this._provider);
-
+  /// Returns all of the types necessary to call [method].
   List<TypeRef> getPositionalArgumentTypes(ClassMember method) {
     List<FormalParameter> parameters;
     if (method is ConstructorDeclaration) {
@@ -222,7 +279,15 @@ class StaticBindingAnalyzer {
   }
 
   /// A collection of all import directives that were generated from scoping.
-  Iterable<ImportDirective> get scopedImports => _importDirectives;
+  Iterable<ImportDirective> calculateImports() {
+    var directives = <ImportDirective> [];
+    _importDirectives.forEach((uri, visible) {
+      directives.add(new ImportDirective(
+          uri,
+          show: visible.toSet().toList(growable: false)..sort()));
+    });
+    return directives;
+  }
 
   /// Converts [staticDartType] into a generation-friendly [DartType].
   TypeRef scopeType(analyzer.DartType staticDartType) {
@@ -231,23 +296,15 @@ class StaticBindingAnalyzer {
       return new TypeRef(staticDartType.displayName);
     }
     final typeSourceUri = staticDartType.element.library.source.toString();
-    final cacheKey = '$typeSourceUri:${staticDartType.displayName}';
-    var typeRef = _cachedDartTypeRefs[cacheKey];
-    var counter = _libraryNamespaceId[typeSourceUri];
-    if (counter == null) {
-      counter = _libraryNamespaceId[typeSourceUri] = _importCounter++;
+    final typeRef = _namespaceStrategy.namespace(
+        typeSourceUri,
+        staticDartType.displayName);
+    final sourceUri = _provider.resolveStaticType(staticDartType);
+    var showIdentifiers = _importDirectives[sourceUri];
+    if (showIdentifiers == null) {
+      showIdentifiers = _importDirectives[sourceUri] = <String> [];
     }
-    if (typeRef == null) {
-      final namespace = 'import_$counter';
-      final uri = _provider.resolveStaticType(staticDartType);
-      final importDirective = new ImportDirective(uri, as: namespace);
-      _importDirectives.add(importDirective);
-
-      // TODO: Support generic types.
-      typeRef = new TypeRef(
-          staticDartType.displayName.split('<').first,
-          namespace: namespace);
-    }
+    showIdentifiers.add(staticDartType.displayName.split('<').first);
     return typeRef;
   }
 }

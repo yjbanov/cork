@@ -2,7 +2,7 @@ name: cork
 description: Fast dependency injection for Dart.
 homepage: https://github.com/matanlurey/cork
 author: Matan Lurey <matanl@google.com>
-version: 0.1.1
+version: 0.1.2
 dependencies:
   analysis: ">=0.0.1-alpha.4 <0.1.0"
   dart_builder: ">=0.1.1 <0.2.0"

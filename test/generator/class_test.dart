@@ -32,7 +32,7 @@ void main() {
 
     test('\'s content works as expected (SingleModuleEntrypoint)', () {
       var injector = new generated_1.SingleModuleEntrypointInjector();
-      Bar bar = injector.get2();
+      Bar bar = injector.getBar();
       expect(bar.foo, const isInstanceOf<Foo>());
     });
 
@@ -48,7 +48,7 @@ void main() {
 
     test('\'s content works as expected (DoubleModuleEntrypoint)', () {
       var injector = new generated_2.DoubleModuleEntrypointInjector();
-      Bar bar = injector.get2();
+      Bar bar = injector.getBar();
       expect(bar.foo, const isInstanceOf<FooImpl>());
     });
   });

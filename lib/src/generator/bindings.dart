@@ -78,7 +78,7 @@ class BindingGenerator {
 
     final file = new SourceFile.library(
         'cork.generated.$entry',
-        imports: imports..addAll(_analyzer.scopedImports),
+        imports: imports..addAll(_analyzer.calculateImports()),
         topLevelElements: [field]);
 
     return new Future.value(file);
