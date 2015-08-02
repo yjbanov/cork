@@ -1,1 +1,6 @@
 name: cork
+dependencies:
+  logging: any
+dev_dependencies:
+  matcher: any
+  test: any
