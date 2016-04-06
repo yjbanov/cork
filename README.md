@@ -35,7 +35,7 @@ It is possible to run Cork with either _runtime_ or _compile-time_ analysis, dep
 Suitable for use in the Dart VM (e.g. server-side), or within Dartium for develpopment only.
 
 ```dart
-import 'package:cork/dynamic.dart';
+import 'package:cork/mirrors.dart';
 
 // Assume same file as above.
 import 'foo.dart';
@@ -43,7 +43,7 @@ import 'foo.dart';
 void main() {
   var injector = createInjector(FooModule);
   var foo = injector.get(Foo);
-  assert(foo.runtimeType == CustomFooImpl)
+  assert(foo.runtimeType == CustomFooImpl);
 }
 ```
 
